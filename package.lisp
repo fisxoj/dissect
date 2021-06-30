@@ -34,6 +34,7 @@
    #:file
    #:line
    #:form
+   #:locals
 
    #:environment
    #:environment-condition

@@ -99,7 +99,8 @@
    (args :initarg :args :reader args)
    (file :initarg :file :reader file)
    (line :initarg :line :reader line)
-   (form :initarg :form :reader form)))
+   (form :initarg :form :reader form)
+   (locals :initarg :locals :reader locals)))
 
 (defmethod print-object ((call call) stream)
   (print-unreadable-object (call stream :type T)
@@ -110,7 +111,7 @@
   (let ((*print-pretty* NIL)
         (*print-readably* NIL)
         (args (args call)))
-    (format stream "~d: ~:[(~s ~s)~;(~s~{ ~a~})~]"
+    (format stream "~d: ~:[(~s ~s)~;(~s~{ ~a~})~]~@[~&~tlocals: ~a~]"
             (pos call)
             ;; If args is a list then they will be listed
             ;; separated by spaces.
@@ -120,7 +121,8 @@
                 (loop for arg in args
                       collect (or (ignore-errors (princ-to-string arg))
                                   "<error printing arg>"))
-                args))))
+                args)
+            (locals call))))
 
 (defclass environment ()
   ((condition :initarg :condition :reader environment-condition)
