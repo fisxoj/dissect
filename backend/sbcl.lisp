@@ -25,6 +25,22 @@
                    (find-definition-in-file (sb-debug::frame-call frame) file)
                  (values file (newlines-until-pos file pos) found-form))))))))
 
+(defun frame-locals (frame)
+  (flet ((variable-valid-p (variable)
+           (eq :valid
+               (sb-di:debug-var-validity variable
+                                         (sb-di:frame-code-location frame)))))
+    (remove-if 'null
+               (map 'list
+                    (lambda (variable)
+                      (ignore-errors
+                       (when (variable-valid-p variable)
+                         (cons (sb-di:debug-var-symbol variable)
+                               (sb-di:debug-var-value variable frame)))))
+                    (ignore-errors
+                     (sb-di::debug-fun-debug-vars
+                      (sb-di:frame-debug-fun frame)))))))
+
 (defun resolve-file-slots (call)
   (multiple-value-bind (file line form) (frame-location (frame call))
     (setf (slot-value call 'file) (when file (translate-logical-pathname file))
@@ -49,7 +65,8 @@
      :pos (sb-di:frame-number frame)
      :call call
      :args args
-     :info info)))
+     :info info
+     :locals (frame-locals frame))))
 
 (defun stack ()
   (chop-stack
@@ -90,4 +107,3 @@
 
 (defmacro with-truncated-stack (() &body body)
   `(stack-truncator (sb-int:named-lambda with-truncated-stack-lambda () ,@body)))
-
